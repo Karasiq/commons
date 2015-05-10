@@ -47,7 +47,7 @@ object FileDownloaderTraits {
     }
 
     private def fileModifyTime(file: Path): Option[FileTime] = {
-      if (file.exists) Some(file.lastModified)
+      if (file.isRegularFile) Some(file.lastModified)
       else None
     }
 
@@ -69,12 +69,12 @@ object FileDownloaderTraits {
     }
 
     private def modified(file: LoadedFile, savePath: Path): Boolean = {
-      import org.apache.http.{HttpStatus => HttpStatusCodes}
+      import org.apache.http.{HttpStatus ⇒ HttpStatusCodes}
       file.status match {
         case HttpStatus(HttpStatusCodes.SC_NOT_MODIFIED, _) ⇒
           false
 
-        case HttpStatus(HttpStatusCodes.SC_OK, _) if olderThanFile(file.responseHeaders.get("Last-Modified"), savePath) ⇒
+        case s: HttpStatus if s.isOk && olderThanFile(file.responseHeaders.get("Last-Modified"), savePath) ⇒
           false
 
         case _ ⇒

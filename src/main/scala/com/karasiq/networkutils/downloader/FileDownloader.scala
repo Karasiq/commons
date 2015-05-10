@@ -2,6 +2,7 @@ package com.karasiq.networkutils.downloader
 
 import java.io._
 
+import com.karasiq.fileutils.PathUtils
 import com.karasiq.networkutils.HttpClientUtils.{HttpClientCookie => Cookie}
 import com.karasiq.networkutils.http.HttpStatus
 import com.karasiq.networkutils.http.headers.HttpHeader
@@ -12,7 +13,7 @@ import scala.language.{implicitConversions, reflectiveCalls}
 
 object FileDownloader {
   def fileNameFor(url: String, name: String): String = {
-    URLFilePathParser.withDefaultFileName(url, name).name
+    PathUtils.validFileName(URLFilePathParser.withDefaultFileName(url, name).name, "_")
   }
 
   def fileNameFor(f: FileToDownload): String = fileNameFor(f.url, f.name)

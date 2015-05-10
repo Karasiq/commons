@@ -1,5 +1,6 @@
 import java.net.InetAddress
 
+import com.karasiq.networkutils.ip.Subnet
 import org.scalatest.FlatSpec
 
 class SubnetTest extends FlatSpec {
