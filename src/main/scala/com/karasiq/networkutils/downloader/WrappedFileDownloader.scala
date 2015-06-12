@@ -16,7 +16,7 @@ trait WrappedFileDownloader { this: FileDownloader ⇒
   protected def needLoading(url: String, directory: String, name: String, headers: Seq[HttpHeader], cookies: Traversable[Cookie]): Boolean = true
 
   protected def needSaving(url: String, file: LoadedFile, savePath: Path): Boolean = {
-    if (!file.status.isOk) throw FileDownloaderException(s"${file.status.code} ${file.status.message}")
+    if (!file.status.isOk) throw FileDownloaderException(s"$url (${file.status.code} ${file.status.message})")
     true
   }
 
@@ -37,7 +37,7 @@ trait WrappedFileDownloader { this: FileDownloader ⇒
   }
 
   @throws[FileDownloaderException]("If downloading error occurs")
-  def download(url: String, directory: String, name: String = "", headers: Seq[HttpHeader] = Nil, cookies: Traversable[Cookie] = Nil): Option[DownloadedFileReport] = FileDownloaderException.wrap {
+  def download(url: String, directory: String, name: String = "", headers: Seq[HttpHeader] = Nil, cookies: Traversable[Cookie] = Nil): Option[DownloadedFileReport] = FileDownloaderException.wrap(url) {
     var result: Option[DownloadedFileReport] = None
 
     if (needLoading(url, directory, name, headers, cookies)) {

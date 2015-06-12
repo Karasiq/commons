@@ -16,8 +16,14 @@ object FileDownloaderException {
 
   def apply(s: String): FileDownloaderException = new FileDownloaderException(s"Error downloading file: $s")
 
-  def wrap[T]: Exception.Catch[T] = {
+  def wrap[T](url: String): Exception.Catch[T] = {
     Exception.catching(classOf[IOException])
-      .withApply(e ⇒ throw this.apply("Error downloading file", e))
+      .withApply {
+        case fde: FileDownloaderException ⇒
+          throw fde
+
+        case exc ⇒
+          throw this.apply(url, exc)
+      }
   }
 }
