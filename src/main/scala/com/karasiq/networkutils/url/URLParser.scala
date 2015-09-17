@@ -29,7 +29,7 @@ sealed abstract class QueryParser {
   /**
    * Returns sequence of [[org.apache.http.NameValuePair NameValuePair]]
    */
-  private[networkutils] def toNameValuePairSeq: Seq[NameValuePair] = toMap.toVector.map { case (k, v) => new BasicNameValuePair(k, v.toString) }
+  private[networkutils] def toNameValuePairSeq: Seq[NameValuePair] = toMap.toVector.map { case (k, v) ⇒ new BasicNameValuePair(k, Option(v).getOrElse("")) }
 
   /**
    * Creates query with new parameter
@@ -64,7 +64,7 @@ object QueryParser {
 
   def apply(params: (String, String)*): QueryParser = apply(params.toMap)
 
-  private[networkutils] def apply(params: Iterable[NameValuePair]): QueryParser = apply(params.map(kv => kv.getName -> kv.getValue).toMap)
+  private[networkutils] def apply(params: Iterable[NameValuePair]): QueryParser = apply(params.map(kv ⇒ kv.getName -> kv.getValue).toMap)
 
   def apply(query: String): QueryParser = apply(URLEncodedUtils.parse(query, Charsets.UTF_8))
 }
