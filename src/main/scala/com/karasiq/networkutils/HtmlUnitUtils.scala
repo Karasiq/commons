@@ -262,7 +262,7 @@ object HtmlUnitUtils {
 
   implicit class WebClientOps(webClient: WebClient) {
     def closeAllWindowsAfter[T](f: ⇒ T): T = {
-      control.Exception.allCatch.andFinally(webClient.closeAllWindows())(f)
+      control.Exception.allCatch.andFinally(webClient.close())(f)
     }
 
     def withGetPage[T <: Page, R, U](url: U)(f: T ⇒ R)(implicit toUrl: URLProvider[U]): R = {

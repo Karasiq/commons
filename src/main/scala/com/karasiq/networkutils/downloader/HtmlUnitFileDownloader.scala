@@ -31,9 +31,7 @@ class HtmlUnitFileDownloader(webClientProducer: ⇒ WebClient) extends FileDownl
 
       override val status: HttpStatus = HttpStatus(page.getWebResponse.getStatusCode, page.getWebResponse.getStatusMessage)
 
-      override def close(): Unit = {
-        webClient.closeAllWindows()
-      }
+      override def close(): Unit = webClient.close()
     }
   }
 

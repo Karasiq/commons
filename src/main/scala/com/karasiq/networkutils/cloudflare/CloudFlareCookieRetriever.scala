@@ -31,13 +31,11 @@ private final class CloudFlareListener(url: URL) {
     override def webWindowContentChanged(p1: WebWindowEvent): Unit = {
       if (p1.getEventType == WebWindowEvent.CHANGE && p1.getNewPage != null && p1.getOldPage != null && p1.getOldPage.getUrl == p1.getNewPage.getUrl) {
         val webClient = p1.getWebWindow.getWebClient
-        try {
+        webClient.closeAllWindowsAfter {
           webClient.removeWebWindowListener(this)
           val cookies = webClient.getCookies(url).toSet
           // log.info(s"CloudFlare cookies dumped: $cookies")
           promise.success(cookies)
-        } finally {
-          webClient.closeAllWindows()
         }
       }
     }
@@ -71,7 +69,7 @@ final private class CloudFlareCookieRetrieverImpl extends CloudFlareCookieRetrie
     scheduler.schedule(new Runnable {
       override def run(): Unit = {
         webClient.removeWebWindowListener(handler.listener)
-        webClient.closeAllWindows()
+        webClient.close()
         handler.timeout()
       }
     }, 15, TimeUnit.SECONDS)

@@ -6,7 +6,7 @@ import com.karasiq.networkutils.HtmlUnitUtils
 
 object CloudFlareUtils {
   def compatibleWebClient(js: Boolean = true, cache: Cache = new Cache, cookieManager: CookieManager = new CookieManager) = {
-    val webClient = HtmlUnitUtils.newWebClient(js, redirect = true, ignoreStatusCode = true, cache = cache, cookieManager = cookieManager, browserVersion = BrowserVersion.FIREFOX_24)
+    val webClient = HtmlUnitUtils.newWebClient(js, redirect = true, ignoreStatusCode = true, cache = cache, cookieManager = cookieManager, browserVersion = BrowserVersion.FIREFOX_38)
     webClient.setScriptPreProcessor(scriptPreprocessor)
     webClient
   }
