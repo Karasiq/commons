@@ -1,6 +1,8 @@
 package com.karasiq.fileutils.pathtree
 
+import java.io.Closeable
 import java.nio.file.{DirectoryStream, FileVisitOption, Files, Path}
+import java.util.concurrent.atomic.AtomicBoolean
 
 import com.karasiq.common.Lazy
 import com.karasiq.common.Lazy._
@@ -14,13 +16,15 @@ import scala.language.implicitConversions
 object PathTreeUtils {
   val defaultTreeFilter: PathTreeFilter = PathTreeFilter()
 
-  private implicit def directoryStreamToIterator[T](ds: DirectoryStream[T]): Iterator[T] = new AbstractIterator[T] {
+  private final class DirectoryStreamIterator[T](ds: DirectoryStream[T]) extends AbstractIterator[T] with Closeable {
     private val underlying = ds.iterator()
 
+    private val closed = new AtomicBoolean(false)
+
     override def next(): T = {
-      if (underlying.hasNext) {
+      if (!closed.get() && underlying.hasNext) {
         val next = underlying.next()
-        if (!underlying.hasNext) IOUtils.closeQuietly(ds) // Last element
+        if (!underlying.hasNext) this.close() // Last element
         next
       } else {
         Iterator.empty.next()
@@ -30,10 +34,23 @@ object PathTreeUtils {
     override def hasNext: Boolean = {
       underlying.hasNext
     }
+
+    def close(): Unit = {
+      if (closed.compareAndSet(false, true)) {
+        ds.close()
+      }
+    }
+
+    override def finalize(): Unit = {
+      IOUtils.closeQuietly(this)
+      super.finalize()
+    }
   }
 
+  private implicit def directoryStreamToIterator[T](ds: DirectoryStream[T]): Iterator[T] = new DirectoryStreamIterator(ds)
+
   implicit class PathTraverseOps(val dir: Path) {
-    assert(!Files.isRegularFile(dir), s"Not directory: $dir")
+    assert(Files.isDirectory(dir), s"Not directory: $dir")
 
     def subFilesAndDirs: Iterator[Path] = if (dir.isDirectory) Files.newDirectoryStream(dir) else Iterator.empty
 
