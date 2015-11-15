@@ -1,7 +1,6 @@
 package com.karasiq.networkutils
 
 import java.net.URL
-import java.util.concurrent.atomic.AtomicBoolean
 
 import com.gargoylesoftware.htmlunit._
 import com.gargoylesoftware.htmlunit.html._
@@ -68,7 +67,7 @@ case class HtmlTraverseOps[T <: HtmlElement](element: Option[T]) {
  * @param elements Set of HTML elements
  * @tparam T Type of HTML elements
  */
-case class HtmlFilterOps[T <: HtmlElement](elements: GenTraversableOnce[T]) {
+case class HtmlFilterOps[T <: HtmlElement](elements: Iterable[T]) {
   import com.karasiq.networkutils.HtmlUnitUtils._
 
   /**
@@ -76,70 +75,80 @@ case class HtmlFilterOps[T <: HtmlElement](elements: GenTraversableOnce[T]) {
    * @param f Predicate function
    * @return First matched element
    */
-  def *\(f: T => Boolean): Option[T] = elements.find(f)
+  def *\(f: T ⇒ Boolean): Option[T] = {
+    elements.find(f)
+  }
 
   /**
    * Filter by predicate
    * @param f Predicate function
    * @return HtmlFilterOps scope of matched elements
    */
-  def *\\(f: T => Boolean): HtmlFilterOps[T] = HtmlFilterOps[T](elements.toIterable.filter(f))
+  def *\\(f: T ⇒ Boolean): HtmlFilterOps[T] = {
+    HtmlFilterOps[T](elements.toStream.filter(f))
+  }
 
   /**
    * First by class
    * @tparam T1 HtmlElement subclass
    * @return First element with specified class
    */
-  def *\[T1 <: HtmlElement](c: Class[T1])(implicit m: Manifest[T1]): Option[T1] = elements.toIterable.collect{case e: T1 => e}.headOption
+  def *\[T1 <: HtmlElement](c: Class[T1])(implicit m: Manifest[T1]): Option[T1] = {
+    elements.toStream.collect { case e: T1 ⇒ e }.headOption
+  }
 
   /**
    * Filter by class
    * @tparam T1 HtmlElement subclass
    * @return HtmlFilterOps scope of elements with specified class
    */
-  def *\\[T1 <: HtmlElement](c: Class[T1])(implicit m: Manifest[T1]): HtmlFilterOps[T1] = HtmlFilterOps[T1](elements.toIterable.collect { case e: T1 => e })
+  def *\\[T1 <: HtmlElement](c: Class[T1])(implicit m: Manifest[T1]): HtmlFilterOps[T1] = {
+    HtmlFilterOps[T1](elements.toStream.collect { case e: T1 ⇒ e })
+  }
 
   /**
    * Finds first by class HTML attribute
    * @param c HTML class
    * @return First element with specified html class attribute
    */
-  def *@\(c: String) = *\(_.classes.contains(c))
+  def *@\(c: String) = {
+    require(c.ne(null) && c.nonEmpty, "Invalid class specification")
+    *\(_.classes.contains(c))
+  }
 
   /**
    * Filter by class HTML attribute
    * @param c HTML class
    * @return HtmlFilterOps scope of elements with specified html class attribute
    */
-  def *@\\(c: String) = *\\(_.classes.contains(c))
+  def *@\\(c: String) = {
+    require(c.ne(null) && c.nonEmpty, "Invalid class specification")
+    *\\(_.classes.contains(c))
+  }
 
   /**
    * Get by index
-   * @param n Element index
-   * @return Some(element) or None if not found
+   * @param n Element index, starting from 0
+   * @return HTML element or `None` if not found
    */
   def #\(n: Int): Option[HtmlElement] = {
-    val seq = elements.toIndexedSeq; if (seq.length <= n) None else Some(seq(n))
+    require(n >= 0, "Invalid index")
+    elements.drop(n).headOption
   }
 }
 
 object HtmlUnitUtils {
   import scala.language.implicitConversions
-
-  private val loggingDisabled = new AtomicBoolean(false)
-
   /**
    * Disables HtmlUnit logging
    */
   def disableLogging(): Unit = {
-    if (loggingDisabled.compareAndSet(false, true)) {
-      import java.util.logging.Level
+    import java.util.logging.Level
 
-      import org.apache.commons.logging.LogFactory
-      LogFactory.getFactory.setAttribute("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.NoOpLog")
-      java.util.logging.Logger.getLogger("com.gargoylesoftware.htmlunit").setLevel(Level.OFF)
-      java.util.logging.Logger.getLogger("org.apache.commons.httpclient").setLevel(Level.OFF)
-    }
+    import org.apache.commons.logging.LogFactory
+    LogFactory.getFactory.setAttribute("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.NoOpLog")
+    java.util.logging.Logger.getLogger("com.gargoylesoftware.htmlunit").setLevel(Level.OFF)
+    java.util.logging.Logger.getLogger("org.apache.commons.httpclient").setLevel(Level.OFF)
   }
 
   class PageURLProvider[P <: Page] extends URLProvider[P] {
@@ -174,7 +183,7 @@ object HtmlUnitUtils {
 
   implicit def elementTraverseOps[T <: HtmlElement](e: T): HtmlTraverseOps[T] = elementOptionTraverseOps[T](Some(e))
 
-  implicit def elementsFilterOps[T <: HtmlElement](e: GenTraversableOnce[T]): HtmlFilterOps[T] = HtmlFilterOps[T](e)
+  implicit def elementsFilterOps[T <: HtmlElement](e: GenTraversableOnce[T]): HtmlFilterOps[T] = HtmlFilterOps[T](e.toStream)
 
   implicit def htmlTraverseOpsGetElement[T <: HtmlElement](ops: HtmlTraverseOps[T]): Option[T] = ops.element
 
@@ -217,6 +226,7 @@ object HtmlUnitUtils {
 
   implicit class PageOps(page: Page) {
     def responseHeader(name: String): Option[String] = {
+      require(name.ne(null) && name.nonEmpty, "Invalid HTTP header name")
       Option(page.getWebResponse.getResponseHeaderValue(name))
     }
   }
@@ -245,12 +255,12 @@ object HtmlUnitUtils {
     def images: Iterator[HtmlImage] = descendantsOf[HtmlImage]
 
     def byXPath[T <: HtmlElement](xpath: String)(implicit m: Manifest[T]): Iterator[T] = {
-      assert(xpath.nonEmpty, "Invalid XPath")
+      require(xpath.ne(null) && xpath.nonEmpty, "Invalid XPath")
       page.elementsBy[T](_.getByXPath(xpath).toIterator.collect { case e: T ⇒ e })
     }
 
     def firstByXPath[T <: HtmlElement](xpath: String)(implicit m: Manifest[T]): Option[T] = {
-      assert(xpath.nonEmpty, "Invalid XPath")
+      require(xpath.ne(null) && xpath.nonEmpty, "Invalid XPath")
       page.getFirstByXPath[T](xpath) match {
         case e: T ⇒
           Some(e)
@@ -261,9 +271,12 @@ object HtmlUnitUtils {
   }
 
   implicit class WebClientOps(webClient: WebClient) {
-    def closeAllWindowsAfter[T](f: ⇒ T): T = {
+    def closeAfter[T](f: ⇒ T): T = {
       control.Exception.allCatch.andFinally(webClient.close())(f)
     }
+
+    @deprecated("Use closeAfter", "1.1")
+    final def closeAllWindowsAfter[T](f: ⇒ T): T = this.closeAfter(f)
 
     def withGetPage[T <: Page, R, U](url: U)(f: T ⇒ R)(implicit toUrl: URLProvider[U]): R = {
       val page = webClient.getPage[T](toUrl(url))

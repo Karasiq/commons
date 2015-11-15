@@ -21,7 +21,7 @@ trait WrappedFileDownloader { this: FileDownloader ⇒
   }
 
   // File download buffer
-  private val buffer = ThreadLocalFactory.weakRef(new Array[Byte](524288))
+  private val buffer = ThreadLocalFactory.softRef(new Array[Byte](10240))
 
   private def copyToFile(loadedFile: LoadedFile, path: Path): Unit = {
     import IOUtils.{closeQuietly, copyLarge}

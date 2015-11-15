@@ -4,7 +4,7 @@ import java.io.Closeable
 
 import com.karasiq.common.factory.Factory
 
-import scala.ref.WeakReference
+import scala.ref._
 
 abstract class ThreadLocalFactory[T] extends Factory[T] with Closeable
 
@@ -26,12 +26,12 @@ private sealed abstract class ThreadLocalFactoryImpl[T] extends ThreadLocalFacto
   }
 }
 
-private sealed abstract class ThreadLocalWeakFactoryImpl[T <: AnyRef] extends ThreadLocalFactory[T] {
+private sealed abstract class ThreadLocalRefFactoryImpl[T <: AnyRef, R <: Reference[T]](f: T ⇒ R) extends ThreadLocalFactory[T] {
   protected def newInstance(): T
   protected def closeInstance(instance: T): Unit
 
-  protected final val threadLocal = new ThreadLocal[WeakReference[T]] {
-    override def initialValue(): WeakReference[T] = WeakReference[T](newInstance())
+  protected final val threadLocal = new ThreadLocal[R] {
+    override def initialValue(): R = f(newInstance())
   }
 
   override def apply(): T = {
@@ -59,7 +59,13 @@ object ThreadLocalFactory {
     override protected def closeInstance(instance: T): Unit = closeInstanceFunction(instance)
   }
 
-  def weakRef[T <: AnyRef](newInstanceFunction: ⇒ T, closeInstanceFunction: T ⇒ Unit = (_: T) ⇒ ()): ThreadLocalFactory[T] = new ThreadLocalWeakFactoryImpl[T] {
+  def weakRef[T <: AnyRef](newInstanceFunction: ⇒ T, closeInstanceFunction: T ⇒ Unit = (_: T) ⇒ ()): ThreadLocalFactory[T] = new ThreadLocalRefFactoryImpl[T, WeakReference[T]](WeakReference.apply) {
+    override protected def newInstance(): T = newInstanceFunction
+
+    override protected def closeInstance(instance: T): Unit = closeInstanceFunction(instance)
+  }
+
+  def softRef[T <: AnyRef](newInstanceFunction: ⇒ T, closeInstanceFunction: T ⇒ Unit = (_: T) ⇒ ()): ThreadLocalFactory[T] = new ThreadLocalRefFactoryImpl[T, SoftReference[T]](new SoftReference(_)) {
     override protected def newInstance(): T = newInstanceFunction
 
     override protected def closeInstance(instance: T): Unit = closeInstanceFunction(instance)
