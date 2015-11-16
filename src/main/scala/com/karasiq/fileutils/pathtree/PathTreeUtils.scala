@@ -11,6 +11,7 @@ import org.apache.commons.io.IOUtils
 
 import scala.collection.AbstractIterator
 import scala.collection.JavaConversions._
+import scala.collection.mutable.ListBuffer
 import scala.language.implicitConversions
 
 object PathTreeUtils {
@@ -62,16 +63,14 @@ object PathTreeUtils {
       subDirs.filter(treeFilter.needTraverse).flatMap(_.subFilesAndDirs).filter(treeFilter.needCollect)
 
     def traverse(depth: Int, treeFilter: PathTreeFilter = defaultTreeFilter, followLinks: Boolean = false): Seq[Path] = {
-      val buffer = Vector.newBuilder[Path]
+      val buffer = new ListBuffer[Path]()
       val options = setAsJavaSet[FileVisitOption](if (followLinks) Set(FileVisitOption.FOLLOW_LINKS) else Set.empty)
       Files.walkFileTree(dir, options, depth, treeFilter.fileVisitor(buffer))
       buffer.result()
     }
 
-    def fullTraverse(treeFilter: PathTreeFilter = defaultTreeFilter): Seq[Path] = {
-      val buffer = Vector.newBuilder[Path]
-      Files.walkFileTree(dir, treeFilter.fileVisitor(buffer))
-      buffer.result()
+    def fullTraverse(treeFilter: PathTreeFilter = defaultTreeFilter, followLinks: Boolean = false): Seq[Path] = {
+      this.traverse(Int.MaxValue, treeFilter, followLinks)
     }
 
     def fullTraverseForSymLinks(): Seq[Path] = fullTraverse(PathTreeFilter(collectFilter = _.isSymbolicLink))
@@ -82,7 +81,7 @@ object PathTreeUtils {
   }
 
   implicit class PathTraversedOps(_files: Traversable[Path]) {
-    private val files = Lazy(_files.toVector)
+    private val files = Lazy(_files.toSeq)
     def onlyDirs = files.filter(_.isDirectory)
     def onlyFiles = files.filter(_.isRegularFile)
 	  def onlySymLinks = files.filter(_.isSymbolicLink)
