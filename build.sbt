@@ -1,8 +1,8 @@
 name := "commons"
 
-version := "1.1-SNAPSHOT"
+version := "1.0.1"
 
-isSnapshot := true
+isSnapshot := false
 
 organization := "com.github.karasiq"
 
