@@ -5,6 +5,7 @@ import java.net.URL
 import com.gargoylesoftware.htmlunit._
 import com.gargoylesoftware.htmlunit.html._
 import com.karasiq.common.StringUtils
+import com.karasiq.networkutils.HttpClientUtils.HttpClientCookie
 import com.karasiq.networkutils.proxy.Proxy
 import com.karasiq.networkutils.url.URLProvider
 
@@ -224,14 +225,14 @@ object HtmlUnitUtils {
     webClient
   }
 
-  implicit class PageOps(page: Page) {
+  implicit class PageOps(val page: Page) extends AnyVal {
     def responseHeader(name: String): Option[String] = {
       require(name.ne(null) && name.nonEmpty, "Invalid HTTP header name")
       Option(page.getWebResponse.getResponseHeaderValue(name))
     }
   }
 
-  implicit class HtmlPageContentOps(page: HtmlPage) {
+  implicit class HtmlPageContentOps(val page: HtmlPage) extends AnyVal {
     def elementOption[E <: HtmlElement](f: HtmlPage ⇒ E): Option[E] =
       scala.util.control.Exception.catching(classOf[ElementNotFoundException], classOf[NullPointerException])
         .opt(f(page)).filter(_ != null)
@@ -270,7 +271,7 @@ object HtmlUnitUtils {
     }
   }
 
-  implicit class WebClientOps(webClient: WebClient) {
+  implicit class WebClientOps(val webClient: WebClient) extends AnyVal {
     def closeAfter[T](f: ⇒ T): T = {
       control.Exception.allCatch.andFinally(webClient.close())(f)
     }
@@ -380,8 +381,8 @@ object HtmlUnitUtils {
     def fullSrc: String = fullUrl(_.getSrcAttribute)
   }
 
-  implicit class HtmlUnitCookiesOps(cookies: Traversable[HtmlUnitCookie]) {
-    def toHttpClient = {
+  implicit class HtmlUnitCookiesOps(val cookies: Traversable[HtmlUnitCookie]) extends AnyVal {
+    def toHttpClient: Traversable[HttpClientCookie] = {
       import com.gargoylesoftware.htmlunit.util.Cookie.{toHttpClient => convert}
       convert(asJavaCollection(cookies.toIterable)).toTraversable
     }

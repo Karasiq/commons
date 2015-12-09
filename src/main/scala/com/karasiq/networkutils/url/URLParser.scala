@@ -2,7 +2,6 @@ package com.karasiq.networkutils.url
 
 import java.net.{MalformedURLException, URI, URL, URLDecoder}
 
-import com.karasiq.networkutils.url
 import org.apache.commons.io.{Charsets, FilenameUtils}
 import org.apache.http.NameValuePair
 import org.apache.http.client.utils.{URIBuilder, URLEncodedUtils}
@@ -15,11 +14,11 @@ import scala.util.matching.Regex
 /**
  * URL query parser util
  */
-sealed abstract class QueryParser {
+final class QueryParser(private val map: Map[String, String]) extends AnyVal {
   /**
    * Returns name-value [[Map]]
    */
-  def toMap: Map[String, String]
+  def toMap: Map[String, String] = this.map
 
   /**
    * Returns name-value tuple seq
@@ -58,15 +57,24 @@ sealed abstract class QueryParser {
 }
 
 object QueryParser {
-  def apply(map: Map[String, String]): QueryParser = new QueryParser {
-    override def toMap: Map[String, String] = map
+  val empty: QueryParser = new QueryParser(Map.empty)
+
+  def apply(map: Map[String, String]): QueryParser = {
+    if (map.isEmpty) empty
+    else new QueryParser(map)
   }
 
-  def apply(params: (String, String)*): QueryParser = apply(params.toMap)
+  def apply(params: (String, String)*): QueryParser = {
+    this.apply(params.toMap)
+  }
 
-  private[networkutils] def apply(params: Iterable[NameValuePair]): QueryParser = apply(params.map(kv ⇒ kv.getName -> kv.getValue).toMap)
+  private[networkutils] def apply(params: Iterable[NameValuePair]): QueryParser = {
+    this.apply(params.map(kv ⇒ kv.getName → kv.getValue).toMap)
+  }
 
-  def apply(query: String): QueryParser = apply(URLEncodedUtils.parse(query, Charsets.UTF_8))
+  def apply(query: String): QueryParser = {
+    this.apply(URLEncodedUtils.parse(query, Charsets.UTF_8))
+  }
 }
 
 /**
@@ -144,8 +152,8 @@ object URLFilePathParser {
 /**
  * URL parser util
  */
-sealed abstract class URLParser {
-  def toURL: URL
+final class URLParser(private val url: URL) extends AnyVal {
+  def toURL: URL = url
   def toURI: URI = toURL.toURI
   def toURIBuilder = new URIBuilder(toURL.toURI)
   override def toString: String = toURL.toString
@@ -158,7 +166,7 @@ sealed abstract class URLParser {
 
   /**
    * Creates URL query parser
-   * @see [[url.QueryParser! QueryParser]]
+   * @see [[com.karasiq.networkutils.url.QueryParser! QueryParser]]
    */
   def queryParser: QueryParser = if (query ne null) QueryParser(query) else QueryParser(Map.empty[String, String])
 
@@ -207,8 +215,8 @@ sealed abstract class URLParser {
 }
 
 object URLParser {
-  def apply[T](url: T)(implicit toUrl: URLProvider[T]): URLParser = new URLParser {
-    override def toURL: URL = toUrl(url)
+  def apply[T: URLProvider](url: T): URLParser = {
+    new URLParser(url)
   }
 
   /**

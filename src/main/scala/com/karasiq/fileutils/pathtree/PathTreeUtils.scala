@@ -4,8 +4,6 @@ import java.io.Closeable
 import java.nio.file.{DirectoryStream, FileVisitOption, Files, Path}
 import java.util.concurrent.atomic.AtomicBoolean
 
-import com.karasiq.common.Lazy
-import com.karasiq.common.Lazy._
 import com.karasiq.fileutils.PathUtils._
 import org.apache.commons.io.IOUtils
 
@@ -50,9 +48,7 @@ object PathTreeUtils {
 
   private implicit def directoryStreamToIterator[T](ds: DirectoryStream[T]): Iterator[T] = new DirectoryStreamIterator(ds)
 
-  implicit class PathTraverseOps(val dir: Path) {
-    assert(Files.isDirectory(dir), s"Not directory: $dir")
-
+  implicit class PathTraverseOps(val dir: Path) extends AnyVal {
     def subFilesAndDirs: Iterator[Path] = if (dir.isDirectory) Files.newDirectoryStream(dir) else Iterator.empty
 
     def subFiles: Iterator[Path] = subFilesAndDirs.filter(_.isRegularFile)
@@ -80,8 +76,7 @@ object PathTreeUtils {
     def fullTraverseForFiles(): Seq[Path] = fullTraverse(PathTreeFilter(collectFilter = _.isRegularFile))
   }
 
-  implicit class PathTraversedOps(_files: Traversable[Path]) {
-    private val files = Lazy(_files.toSeq)
+  implicit class PathTraversedOps(val files: Traversable[Path]) extends AnyVal {
     def onlyDirs = files.filter(_.isDirectory)
     def onlyFiles = files.filter(_.isRegularFile)
 	  def onlySymLinks = files.filter(_.isSymbolicLink)
@@ -89,12 +84,12 @@ object PathTreeUtils {
     def subFiles = files.flatMap(_.subFiles)
     def subDirs = files.flatMap(_.subDirs)
 
-    def findDuplicatesBy[T](func: Path ⇒ T): FileDuplicatesOps[T] = FileDuplicatesOps {
-      val seq = files.zip(files map func)
+    def findDuplicatesBy[T](func: Path ⇒ T): FileDuplicatesOps[T] = new FileDuplicatesOps({
+      val seq = files.toSeq.zip(files.toSeq.map(func))
       seq.filter(f ⇒ seq.count(_._2 == f._2) > 1)
         .groupBy(_._2)
         .mapValues(_.map(_._1).toSet)
-    }
+    })
 
     def findDuplicatesByHash(): FileDuplicatesOps[Long] = onlyFiles.findDuplicatesBy(_.crc32)
 
@@ -103,7 +98,7 @@ object PathTreeUtils {
     def findDuplicatesBySize(): FileDuplicatesOps[Long] = onlyFiles.findDuplicatesBy(_.fileSize)
   }
 
-  case class FileDuplicatesOps[T](duplicates: Map[T, Set[Path]]) {
+  class FileDuplicatesOps[T](val duplicates: Map[T, Set[Path]]) extends AnyVal {
     def deleteBy(f: (T, Set[Path]) ⇒ Path) {
       duplicates.flatMap(d ⇒ d._2 - f.tupled(d))
         .foreach(_.deleteFileOrDir())

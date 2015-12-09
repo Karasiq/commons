@@ -10,15 +10,13 @@ scalaVersion := "2.11.7"
 
 libraryDependencies ++= Seq(
   "commons-io" % "commons-io" % "2.4",
-  "org.apache.httpcomponents" % "httpclient" % "4.3.3",
+  "org.apache.httpcomponents" % "httpclient" % "4.3.5",
   "net.sourceforge.htmlunit" % "htmlunit" % "2.18" % "provided",
   "joda-time" % "joda-time" % "2.4",
   "org.joda" % "joda-convert" % "1.7",
   "com.typesafe" % "config" % "1.3.0",
-  "org.scalatest" %% "scalatest" % "2.2.1" % "test"
+  "org.scalatest" %% "scalatest" % "2.2.4" % "test"
 )
-
-scalacOptions ++= Seq("-feature", "-optimize", "-deprecation", "-Yinline-warnings")
 
 publishMavenStyle := true
 
@@ -34,7 +32,7 @@ publishArtifact in Test := false
 
 pomIncludeRepository := { _ ⇒ false }
 
-licenses := Seq("Apache License, Version 2.0" -> url("http://opensource.org/licenses/Apache-2.0"))
+licenses := Seq("Apache License, Version 2.0" → url("http://opensource.org/licenses/Apache-2.0"))
 
 homepage := Some(url("https://github.com/Karasiq/" + name.value))
 

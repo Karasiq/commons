@@ -85,7 +85,7 @@ object PathUtils {
 
   def getOrCreate(s: String): Path = getOrCreate(asPath(s))
 
-  implicit class PathGenericOps(path: Path) {
+  implicit class PathGenericOps(val path: Path) extends AnyVal {
     def isDirectory: Boolean = Files.isDirectory(path)
     def isRegularFile: Boolean = Files.isRegularFile(path)
     def isSymbolicLink: Boolean = Files.isSymbolicLink(path)
@@ -147,9 +147,8 @@ object PathUtils {
     def deleteFileOrDir(): Unit = if (path.isDirectory && !path.isSymbolicLink) deleteDir() else deleteFile()
   }
 
-  implicit class PathChecksumOps(file: Path) {
+  implicit class PathChecksumOps(val file: Path) extends AnyVal {
     import java.util.zip.{Adler32, CRC32, CheckedInputStream, Checksum}
-    assert(file.isRegularFile, s"Invalid file: $file")
 
     private def checksum(cs: Checksum): Long = {
       val inputStream = file.inputStream()
@@ -164,13 +163,15 @@ object PathUtils {
       }
     }
 
-    lazy val crc32 = checksum(new CRC32)
-    lazy val adler32 = checksum(new Adler32)
+    def crc32: Long = this.checksum(new CRC32)
+    def adler32: Long = this.checksum(new Adler32)
 
-    def hashesEquals(f: Path): Boolean = f.crc32 == crc32 && f.adler32 == adler32
+    def hashesEquals(f: Path): Boolean = {
+      f.crc32 == crc32 && f.adler32 == adler32
+    }
   }
 
-  implicit class PathSeqOps(p: GenSeq[Path]) {
-    def namesSeq: GenSeq[String] = p.map(_.name)
+  implicit class PathSeqOps(val pathSeq: GenSeq[Path]) extends AnyVal {
+    def namesSeq: GenSeq[String] = pathSeq.map(_.name)
   }
 }

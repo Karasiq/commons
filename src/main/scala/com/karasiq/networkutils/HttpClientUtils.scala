@@ -1,5 +1,6 @@
 package com.karasiq.networkutils
 
+import com.karasiq.networkutils.HtmlUnitUtils.HtmlUnitCookie
 import com.karasiq.networkutils.proxy.Proxy
 import org.apache.http.client.HttpRequestRetryHandler
 import org.apache.http.client.config.RequestConfig
@@ -56,14 +57,14 @@ object HttpClientUtils {
 
   def defaultSettings = Settings(poolingConnectionManager(30, 5), requestConfig(30000), retryHandler(3, sentRetryEnabled = true), keepAlive(60000))
 
-  implicit class HttpClientCookiesOps(val cookies: Traversable[HttpClientCookie]) {
-    def toCookieStore = {
+  implicit class HttpClientCookiesOps(val cookies: Traversable[HttpClientCookie]) extends AnyVal {
+    def toCookieStore: BasicCookieStore = {
       val s = new BasicCookieStore
       cookies.foreach(s.addCookie)
       s
     }
 
-    def toHtmlUnit = {
+    def toHtmlUnit: Traversable[HtmlUnitCookie] = {
       import com.gargoylesoftware.htmlunit.util.Cookie.{fromHttpClient => convert}
       convert(seqAsJavaList(cookies.toVector)).toTraversable
     }
