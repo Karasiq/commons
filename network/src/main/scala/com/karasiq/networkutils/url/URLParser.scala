@@ -1,6 +1,6 @@
 package com.karasiq.networkutils.url
 
-import java.net.{MalformedURLException, URI, URL, URLDecoder}
+import java.net.{URI, URL, URLDecoder}
 
 import org.apache.commons.io.{Charsets, FilenameUtils}
 import org.apache.http.NameValuePair
@@ -8,7 +8,7 @@ import org.apache.http.client.utils.{URIBuilder, URLEncodedUtils}
 import org.apache.http.message.BasicNameValuePair
 
 import scala.collection.JavaConversions._
-import scala.util.control
+import scala.util.Try
 import scala.util.matching.Regex
 
 /**
@@ -224,9 +224,8 @@ object URLParser {
    * @param url URL
    * @return Is URL valid
    */
-  def isValidURL(url: String): Boolean = {
-    control.Exception.catching(classOf[MalformedURLException])
-      .opt(new URL(url)).nonEmpty
+  def isValidURL(url: ⇒ String): Boolean = {
+    Try(new URL(url)).isSuccess
   }
 
   /**
@@ -234,7 +233,7 @@ object URLParser {
    * @param protocol Default protocol
    */
   def withDefaultProtocol(url: String, protocol: String = "http"): URL = {
-    control.Exception.catching(classOf[MalformedURLException])
-      .opt(new URL(url)).getOrElse(new URL(s"$protocol://$url"))
+    Try(new URL(url))
+      .getOrElse(new URL(s"$protocol://$url"))
   }
 }
