@@ -1,49 +1,92 @@
+import sbt.Keys._
+
 name := "commons"
 
-version := "1.0.1"
-
-isSnapshot := false
-
-organization := "com.github.karasiq"
-
-scalaVersion := "2.11.7"
-
-libraryDependencies ++= Seq(
+val commonDeps = Seq(
   "commons-io" % "commons-io" % "2.4",
-  "org.apache.httpcomponents" % "httpclient" % "4.3.5",
-  "net.sourceforge.htmlunit" % "htmlunit" % "2.18" % "provided",
-  "joda-time" % "joda-time" % "2.4",
-  "org.joda" % "joda-convert" % "1.7",
   "com.typesafe" % "config" % "1.3.0",
   "org.scalatest" %% "scalatest" % "2.2.4" % "test"
 )
 
-publishMavenStyle := true
+val networkDeps = Seq(
+  "org.apache.httpcomponents" % "httpclient" % "4.5.1",
+  "net.sourceforge.htmlunit" % "htmlunit" % "2.19" % "provided",
+  "joda-time" % "joda-time" % "2.4",
+  "org.joda" % "joda-convert" % "1.7"
+)
 
-publishTo := {
-  val nexus = "https://oss.sonatype.org/"
-  if (isSnapshot.value)
-    Some("snapshots" at nexus + "content/repositories/snapshots")
-  else
-    Some("releases" at nexus + "service/local/staging/deploy/maven2")
-}
+val akkaDeps = Seq(
+  "com.typesafe.akka" %% "akka-actor" % "2.4.0" % "provided"
+)
 
-publishArtifact in Test := false
+lazy val commonSettings = Seq(
+  version := "1.0.2",
+  isSnapshot := false,
+  organization := "com.github.karasiq",
+  scalaVersion := "2.11.7",
+  libraryDependencies ++= commonDeps,
+  publishMavenStyle := true,
+  publishTo := {
+    val nexus = "https://oss.sonatype.org/"
+    if (isSnapshot.value)
+      Some("snapshots" at nexus + "content/repositories/snapshots")
+    else
+      Some("releases" at nexus + "service/local/staging/deploy/maven2")
+  },
+  publishArtifact in Test := false,
+  pomIncludeRepository := { _ ⇒ false },
+  licenses := Seq("Apache License, Version 2.0" → url("http://opensource.org/licenses/Apache-2.0")),
+  homepage := Some(url("https://github.com/Karasiq/commons")),
+  pomExtra := <scm>
+    <url>git@github.com:Karasiq/commons.git</url>
+    <connection>scm:git:git@github.com:Karasiq/commons.git</connection>
+  </scm>
+    <developers>
+      <developer>
+        <id>karasiq</id>
+        <name>Piston Karasiq</name>
+        <url>https://github.com/Karasiq</url>
+      </developer>
+    </developers>
+)
 
-pomIncludeRepository := { _ ⇒ false }
+lazy val rootSettings = Seq(
+  name := "commons"
+)
 
-licenses := Seq("Apache License, Version 2.0" → url("http://opensource.org/licenses/Apache-2.0"))
+lazy val miscSettings = Seq(
+  name := "commons-misc"
+)
 
-homepage := Some(url("https://github.com/Karasiq/" + name.value))
+lazy val filesSettings = Seq(
+  name := "commons-files"
+)
 
-pomExtra := <scm>
-  <url>git@github.com:Karasiq/{name.value}.git</url>
-  <connection>scm:git:git@github.com:Karasiq/{name.value}.git</connection>
-</scm>
-  <developers>
-    <developer>
-      <id>karasiq</id>
-      <name>Piston Karasiq</name>
-      <url>https://github.com/Karasiq</url>
-    </developer>
-  </developers>
+lazy val networkSettings = Seq(
+  name := "commons-network",
+  libraryDependencies ++= networkDeps
+)
+
+lazy val akkaSettings = Seq(
+  name := "commons-akka",
+  libraryDependencies ++= akkaDeps ++ networkDeps
+)
+
+lazy val misc = Project("commons-misc", file("misc"))
+  .settings(commonSettings, miscSettings)
+
+lazy val files = Project("commons-files", file("files"))
+  .settings(commonSettings, filesSettings)
+
+lazy val network = Project("commons-network", file("network"))
+  .settings(commonSettings, networkSettings)
+  .dependsOn(misc, files)
+
+lazy val akka = Project("commons-akka", file("akka"))
+  .settings(commonSettings, akkaSettings)
+  .dependsOn(network, files)
+
+lazy val root = Project("commons", file("."))
+  .settings(commonSettings, rootSettings)
+  .dependsOn(misc, files, network)
+  .aggregate(misc, files, network, akka)

@@ -69,7 +69,7 @@ object FileDownloaderTraits {
     }
 
     private def modified(file: LoadedFile, savePath: Path): Boolean = {
-      import org.apache.http.{HttpStatus ⇒ HttpStatusCodes}
+      import org.apache.http.{HttpStatus => HttpStatusCodes}
       file.status match {
         case HttpStatus(HttpStatusCodes.SC_NOT_MODIFIED, _) ⇒
           false
