@@ -19,6 +19,14 @@ object CloudFlareUtils {
       false
   }
 
+  def isCloudFlareCaptchaPage(page: Page) = page match {
+    case htmlPage: HtmlPage if htmlPage.getWebResponse.getStatusCode == 403 && htmlPage.asXml().contains("Please complete the security check to access") ⇒
+      true
+
+    case _ ⇒
+      false
+  }
+
 
   protected[cloudflare] def scriptPreprocessor: ScriptPreProcessor = new ScriptPreProcessor {
     @inline
