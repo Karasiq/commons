@@ -210,12 +210,12 @@ object HtmlUnitUtils {
     webClient.setCookieManager(cookieManager)
     proxy.foreach(p ⇒ webClient.getOptions.setProxyConfig(p))
 
+    webClient.getOptions.setThrowExceptionOnScriptError(false)
     webClient.getOptions.setThrowExceptionOnFailingStatusCode(!ignoreStatusCode)
     webClient.getOptions.setCssEnabled(false)
 
     webClient.getOptions.setJavaScriptEnabled(js)
     if (js) {
-      webClient.getOptions.setThrowExceptionOnScriptError(false)
       webClient.setAjaxController(ajaxController)
     }
 
