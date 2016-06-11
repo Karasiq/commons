@@ -10,20 +10,20 @@ val commonDeps = Seq(
 
 val networkDeps = Seq(
   "org.apache.httpcomponents" % "httpclient" % "4.5.1",
-  "net.sourceforge.htmlunit" % "htmlunit" % "2.19" % "provided",
+  "net.sourceforge.htmlunit" % "htmlunit" % "2.22" % "provided",
   "joda-time" % "joda-time" % "2.4",
   "org.joda" % "joda-convert" % "1.7"
 )
 
 val akkaDeps = Seq(
-  "com.typesafe.akka" %% "akka-actor" % "2.4.0" % "provided"
+  "com.typesafe.akka" %% "akka-actor" % "2.4.6" % "provided"
 )
 
 lazy val commonSettings = Seq(
-  version := "1.0.3",
-  isSnapshot := false,
+  version := "1.0.4",
+  isSnapshot := version.value.endsWith("SNAPSHOT"),
   organization := "com.github.karasiq",
-  scalaVersion := "2.11.7",
+  scalaVersion := "2.11.8",
   libraryDependencies ++= commonDeps,
   publishMavenStyle := true,
   publishTo := {
