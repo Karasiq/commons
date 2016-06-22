@@ -20,16 +20,15 @@ trait FileDownloaderActor extends WrappedFileDownloader with Actor with ActorLog
 
   final def download(f: FileToDownload): Option[DownloadedFileReport] = download(f.url, f.directory, f.name, f.httpHeaders, f.cookies)
 
-  final def sendReport(report: DownloadedFileReport) = context.sender() ! report
-
   override def receive = {
-    case f: FileToDownload ⇒
-      log.debug("Downloading file: {}", f)
-      Future(download(f)).onComplete {
+    case file: FileToDownload ⇒
+      val sender = context.sender()
+      log.debug("Downloading file: {}", file)
+      Future(concurrent.blocking(download(file))).onComplete {
         case Failure(exc) ⇒
           log.error(exc, "Error downloading file")
         case Success(report) ⇒
-          if (f.sendReport) report.foreach(sendReport)
+          if (file.sendReport) report.foreach(sender ! _)
       }
     case m ⇒
       log.warning("Unknown message: {}", m)

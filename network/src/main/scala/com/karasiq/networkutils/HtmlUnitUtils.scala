@@ -273,15 +273,16 @@ object HtmlUnitUtils {
 
   implicit class WebClientOps(val webClient: WebClient) extends AnyVal {
     def closeAfter[T](f: ⇒ T): T = {
-      control.Exception.allCatch.andFinally(webClient.close())(f)
+      try { f } finally { webClient.close() }
     }
 
-    @deprecated("Use closeAfter", "1.1")
-    final def closeAllWindowsAfter[T](f: ⇒ T): T = this.closeAfter(f)
-
     def withGetPage[T <: Page, R, U](url: U)(f: T ⇒ R)(implicit toUrl: URLProvider[U]): R = {
-      val page = webClient.getPage[T](toUrl(url))
-      control.Exception.allCatch.andFinally(page.cleanUp())(f(page))
+      val page = concurrent.blocking(webClient.getPage[T](toUrl(url)))
+      try {
+        f(page)
+      } finally {
+        page.cleanUp()
+      }
     }
 
     def withGetHtmlPage[R, U](url: U)(f: HtmlPage ⇒ R)(implicit toUrl: URLProvider[U]): R = {
@@ -315,7 +316,7 @@ object HtmlUnitUtils {
 
     def pageOption[T <: Page, U](url: U)(implicit m: Manifest[T], toUrl: URLProvider[U]): Option[T] =
       control.Exception.catching(classOf[FailingHttpStatusCodeException])
-        .opt(webClient.getPage[Page](toUrl(url)))
+        .opt(concurrent.blocking(webClient.getPage[Page](toUrl(url))))
         .collect { case t: T ⇒ t }
 
     def htmlPageOption[U](url: U)(implicit toUrl: URLProvider[U]): Option[HtmlPage] = {

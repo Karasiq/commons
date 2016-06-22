@@ -62,7 +62,7 @@ final private class CloudFlareCookieRetrieverImpl extends CloudFlareCookieRetrie
     val webClient = WebClientFactory()
     val handler = new CloudFlareListener(url)
     webClient.addWebWindowListener(handler.listener)
-    val page = webClient.getPage[Page](url)
+    val page = concurrent.blocking(webClient.getPage[Page](url))
 
     // Timeout in 15 seconds
     scheduler.schedule(new Runnable {

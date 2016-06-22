@@ -40,9 +40,9 @@ abstract class HtmlUnitActor(webClientProducer: ⇒ WebClient) extends Actor wit
     case m: PageURL ⇒
       val webClient = webClientProducer
       val sender = context.sender()
-      breaker.withCircuitBreaker(Future(webClient.getPage[Page](m.url))).onComplete {
+      breaker.withCircuitBreaker(Future(concurrent.blocking(webClient.getPage[Page](m.url)))).onComplete {
         case Success(page) ⇒
-          Exception.allCatch.withApply(onError).andFinally(afterProcess(m, sender, webClient)) {
+          Exception.nonFatalCatch.withApply(onError).andFinally(afterProcess(m, sender, webClient)) {
             processPage(m, sender, page)
           }
         case Failure(e) ⇒
