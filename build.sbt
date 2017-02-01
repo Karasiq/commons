@@ -3,27 +3,28 @@ import sbt.Keys._
 name := "commons"
 
 val commonDeps = Seq(
-  "commons-io" % "commons-io" % "2.4",
-  "com.typesafe" % "config" % "1.3.0",
-  "org.scalatest" %% "scalatest" % "2.2.4" % "test"
+  "commons-io" % "commons-io" % "2.5",
+  "com.typesafe" % "config" % "1.3.1",
+  "org.scalatest" %% "scalatest" % "3.0.1" % "test"
 )
 
 val networkDeps = Seq(
   "org.apache.httpcomponents" % "httpclient" % "4.5.1",
-  "net.sourceforge.htmlunit" % "htmlunit" % "2.22" % "provided",
-  "joda-time" % "joda-time" % "2.4",
-  "org.joda" % "joda-convert" % "1.7"
+  "net.sourceforge.htmlunit" % "htmlunit" % "2.24" % "provided",
+  "joda-time" % "joda-time" % "2.9.7",
+  "org.joda" % "joda-convert" % "1.8.1"
 )
 
 val akkaDeps = Seq(
-  "com.typesafe.akka" %% "akka-actor" % "2.4.6" % "provided"
+  "com.typesafe.akka" %% "akka-actor" % "2.4.16" % "provided"
 )
 
 lazy val commonSettings = Seq(
-  version := "1.0.4",
+  version := "1.0.5",
   isSnapshot := version.value.endsWith("SNAPSHOT"),
   organization := "com.github.karasiq",
-  scalaVersion := "2.11.8",
+  scalaVersion := "2.12.1",
+  crossScalaVersions := Seq("2.11.8", "2.12.1"),
   libraryDependencies ++= commonDeps,
   publishMavenStyle := true,
   publishTo := {
