@@ -79,7 +79,8 @@ object Proxy {
   /**
    * Default proxy from config key [[defaultProxyConfigKey]]
    */
-  val default: Option[Proxy] = Some(this.config(defaultProxyConfigKey))
+  lazy val default: Option[Proxy] = ExcControl.catching(classOf[ConfigException])
+    .opt(this.config(defaultProxyConfigKey))
     .filter(p ⇒ p.host.nonEmpty && p.port > 0)
 
   def apply[U](uri: U)(implicit toUri: URIProvider[U]): Proxy = {
