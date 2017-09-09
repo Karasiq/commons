@@ -30,8 +30,8 @@ abstract class Proxy {
       case "http" | "https" | "" | null ⇒
         JavaProxy.Type.HTTP
 
-      case sch ⇒
-        throw new IllegalArgumentException(s"Unsupported proxy scheme: $sch")
+      case scheme ⇒
+        throw new IllegalArgumentException(s"Unsupported proxy scheme: $scheme")
     }
 
     val proxyAddress = this.toInetSocketAddress

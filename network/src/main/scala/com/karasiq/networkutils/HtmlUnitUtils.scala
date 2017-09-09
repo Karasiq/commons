@@ -123,7 +123,7 @@ case class HtmlFilterOps[T <: HtmlElement](elements: Iterable[T]) {
    * @param c HTML class
    * @return HtmlFilterOps scope of elements with specified html class attribute
    */
-  def *@\\(c: String) = {
+  def *@\\(c: String): HtmlFilterOps[T] = {
     require(c.ne(null) && c.nonEmpty, "Invalid class specification")
     *\\(_.classes.contains(c))
   }
@@ -141,6 +141,7 @@ case class HtmlFilterOps[T <: HtmlElement](elements: Iterable[T]) {
 
 object HtmlUnitUtils {
   import scala.language.implicitConversions
+
   /**
    * Disables HtmlUnit logging
    */
@@ -297,7 +298,7 @@ object HtmlUnitUtils {
         .andFinally(webClient.setCookieManager(oldCookies))(f)
     }
 
-    def withJavaScript[T](enabled: Boolean = true)(f: WebClient ⇒ T) = {
+    def withJavaScript[T](enabled: Boolean = true)(f: WebClient ⇒ T): T = {
       val js = webClient.getOptions.isJavaScriptEnabled
       webClient.getOptions.setJavaScriptEnabled(enabled)
       val result: T = f(webClient)
@@ -306,12 +307,15 @@ object HtmlUnitUtils {
     }
 
     def withConfirmAllHandler[T](f: WebClient ⇒ T): T = {
-      val ch = webClient.getConfirmHandler
+      val confirmHandler = webClient.getConfirmHandler
+
+      //noinspection ConvertExpressionToSAM
       webClient.setConfirmHandler(new ConfirmHandler {
         override def handleConfirm(page: Page, message: String): Boolean = true
       })
+
       val result: T = f(webClient)
-      webClient.setConfirmHandler(ch)
+      webClient.setConfirmHandler(confirmHandler)
       result
     }
 
@@ -399,11 +403,8 @@ object HtmlUnitUtils {
 
   implicit def proxyConfigToProxy(pc: ProxyConfig): Proxy = new Proxy {
     override def host: String = pc.getProxyHost
-
     override def scheme: String = if (pc.isSocksProxy) "socks" else "http"
-
     override def port: Int = pc.getProxyPort
-
     override def userInfo: Option[String] = None
   }
 }
