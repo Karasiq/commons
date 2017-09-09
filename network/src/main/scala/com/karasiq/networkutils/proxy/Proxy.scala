@@ -72,12 +72,17 @@ final class TypeSafeConfigProxy(config: Config) extends Proxy {
 
 object Proxy {
   /**
+    * Default configuration
+    */
+  private lazy val defaultConfig = ConfigFactory.load()
+
+  /**
    * Default proxy configuration key
    */
   private def defaultProxyConfigKey: String = "karasiq.http.default-proxy"
 
   /**
-   * Default proxy from config key [[defaultProxyConfigKey]]
+   * Default proxy from config
    */
   lazy val default: Option[Proxy] = ExcControl.catching(classOf[ConfigException])
     .opt(this.config(defaultProxyConfigKey))
@@ -113,5 +118,5 @@ object Proxy {
 
   def config(c: Config): Proxy = new TypeSafeConfigProxy(c)
   def config(c: Config, key: String): Proxy = config(c.getConfig(key))
-  def config(key: String): Proxy = config(ConfigFactory.load(), key)
+  def config(key: String): Proxy = config(defaultConfig, key)
 }
