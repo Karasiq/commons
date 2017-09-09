@@ -2,16 +2,17 @@ package com.karasiq.networkutils
 
 import java.net.URL
 
+import scala.collection.GenTraversableOnce
+import scala.collection.JavaConversions._
+import scala.util.control
+
 import com.gargoylesoftware.htmlunit._
 import com.gargoylesoftware.htmlunit.html._
+
 import com.karasiq.common.StringUtils
 import com.karasiq.networkutils.HttpClientUtils.HttpClientCookie
 import com.karasiq.networkutils.proxy.Proxy
 import com.karasiq.networkutils.url.URLProvider
-
-import scala.collection.GenTraversableOnce
-import scala.collection.JavaConversions._
-import scala.util.control
 
 /**
  * Dynamic HTML element traverse helper
@@ -112,7 +113,7 @@ case class HtmlFilterOps[T <: HtmlElement](elements: Iterable[T]) {
    * @param c HTML class
    * @return First element with specified html class attribute
    */
-  def *@\(c: String) = {
+  def *@\(c: String): Option[T] = {
     require(c.ne(null) && c.nonEmpty, "Invalid class specification")
     *\(_.classes.contains(c))
   }
@@ -249,7 +250,7 @@ object HtmlUnitUtils {
 
     def descendantsBy[R](pf: PartialFunction[HtmlElement, R]): Iterator[R] = page.getDocumentElement.subElementsBy(pf)
 
-    def descendantsOf[E <: HtmlElement](implicit m: Manifest[E]) = page.getDocumentElement.subElementsOf[E]
+    def descendantsOf[E <: HtmlElement](implicit m: Manifest[E]): Iterator[E] = page.getDocumentElement.subElementsOf[E]
 
     def anchors: Iterator[HtmlAnchor] = descendantsOf[HtmlAnchor]
 
@@ -257,7 +258,7 @@ object HtmlUnitUtils {
 
     def byXPath[T <: HtmlElement](xpath: String)(implicit m: Manifest[T]): Iterator[T] = {
       require(xpath.ne(null) && xpath.nonEmpty, "Invalid XPath")
-      page.elementsBy[T](_.getByXPath(xpath).toIterator.collect { case e: T ⇒ e })
+      page.elementsBy[T](_.getByXPath[T](xpath).toIterator.collect { case e: T ⇒ e })
     }
 
     def firstByXPath[T <: HtmlElement](xpath: String)(implicit m: Manifest[T]): Option[T] = {
@@ -384,7 +385,7 @@ object HtmlUnitUtils {
 
   implicit class HtmlUnitCookiesOps(val cookies: Traversable[HtmlUnitCookie]) extends AnyVal {
     def toHttpClient: Traversable[HttpClientCookie] = {
-      import com.gargoylesoftware.htmlunit.util.Cookie.{toHttpClient => convert}
+      import com.gargoylesoftware.htmlunit.util.Cookie.{toHttpClient ⇒ convert}
       convert(asJavaCollection(cookies.toIterable)).toTraversable
     }
   }
