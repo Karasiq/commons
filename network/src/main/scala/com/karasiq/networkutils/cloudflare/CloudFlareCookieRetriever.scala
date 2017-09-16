@@ -1,25 +1,27 @@
 package com.karasiq.networkutils.cloudflare
 
 import java.net.URL
-import java.util.concurrent.{Executors, TimeUnit, TimeoutException}
+import java.util.concurrent.{Executors, TimeoutException, TimeUnit}
+
+import scala.collection.JavaConverters._
+import scala.concurrent.{Await, ExecutionContext, Future, Promise}
+import scala.concurrent.duration._
+import scala.language.postfixOps
 
 import com.gargoylesoftware.htmlunit._
 import com.gargoylesoftware.htmlunit.util.Cookie
-import com.karasiq.common.factory.Factory
+
 import com.karasiq.networkutils.HtmlUnitUtils._
 
-import scala.collection.JavaConversions._
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future, Promise}
-import scala.language.postfixOps
-
 object CloudFlareCookieRetriever {
-  def apply(): CloudFlareCookieRetriever = new CloudFlareCookieRetrieverImpl
+  def apply(createWebClient: () ⇒ WebClient = () ⇒ CloudFlareUtils.compatibleWebClient()): CloudFlareCookieRetriever = {
+    new CloudFlareCookieRetrieverImpl(createWebClient)
+  }
 }
 
 trait CloudFlareCookieRetriever {
   def retrieveCookiesAsync(url: URL): Future[Set[Cookie]]
-  def retrieveCookies(url: URL): Set[Cookie] = Await.result(retrieveCookiesAsync(url), Duration.Inf)
+  def retrieveCookies(url: URL): Set[Cookie] = Await.result(retrieveCookiesAsync(url), 1 minute)
 }
 
 private final class CloudFlareListener(url: URL) {
@@ -33,7 +35,7 @@ private final class CloudFlareListener(url: URL) {
         val webClient = p1.getWebWindow.getWebClient
         webClient.closeAfter {
           webClient.removeWebWindowListener(this)
-          val cookies = webClient.getCookies(url).toSet
+          val cookies = webClient.getCookies(url).asScala.toSet
           promise.success(cookies)
         }
       }
@@ -49,17 +51,12 @@ private final class CloudFlareListener(url: URL) {
   }
 }
 
-final private class CloudFlareCookieRetrieverImpl extends CloudFlareCookieRetriever {
-  private val scheduler = Executors.newSingleThreadScheduledExecutor()
+private final class CloudFlareCookieRetrieverImpl(createWebClient: () ⇒ WebClient) extends CloudFlareCookieRetriever {
+  private[this] val scheduler = Executors.newSingleThreadScheduledExecutor()
+  private[this] implicit val executionContext: ExecutionContext = ExecutionContext.fromExecutorService(scheduler)
 
-  private object WebClientFactory extends Factory[WebClient] {
-    val cookieManager = new CookieManager
-    val cache = new Cache
-    override def apply(): WebClient = CloudFlareUtils.compatibleWebClient(cache = cache, cookieManager = cookieManager)
-  }
-
-  override def retrieveCookiesAsync(url: URL) = {
-    val webClient = WebClientFactory()
+  override def retrieveCookiesAsync(url: URL): Future[Set[HtmlUnitCookie]] = {
+    val webClient = createWebClient()
     val handler = new CloudFlareListener(url)
     webClient.addWebWindowListener(handler.listener)
     val page = concurrent.blocking(webClient.getPage[Page](url))
