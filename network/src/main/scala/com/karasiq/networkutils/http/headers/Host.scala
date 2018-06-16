@@ -16,8 +16,8 @@ object Host extends HttpHeader.Extractor("Host") {
   }
 
   def apply(address: InetSocketAddress): HttpHeader = {
-    if (address.getPort == 80) HttpHeader(name, address.getHostString)
-    else HttpHeader(name, address.toString)
+    if (address.getPort == 80) HttpHeader(name, hostStringOrAddress(address))
+    else HttpHeader(name, s"${hostStringOrAddress(address)}:${address.getPort}")
   }
 
   override def unapply(h: HttpHeader): Option[String] = h match {
@@ -27,4 +27,7 @@ object Host extends HttpHeader.Extractor("Host") {
     case _ ⇒
       None
   }
+
+  private def hostStringOrAddress(address: InetSocketAddress): String =
+    Option(address.getHostString).getOrElse(address.getAddress.getHostAddress)
 }
