@@ -20,7 +20,7 @@ val akkaDeps = Seq(
 )
 
 lazy val commonSettings = Seq(
-  version := "1.0.8",
+  version := "1.0.9",
   isSnapshot := version.value.endsWith("SNAPSHOT"),
   organization := "com.github.karasiq",
   scalaVersion := "2.12.3",
@@ -100,7 +100,7 @@ lazy val configsJVM = configs.jvm
 
 lazy val configsJS = configs.js
 
-lazy val root = Project("commons", file("."))
+lazy val `commons` = Project("commons", file("."))
   .settings(commonSettings, rootSettings)
   .dependsOn(misc, files, network)
   .aggregate(misc, files, network, akka, configsJVM, configsJS)
