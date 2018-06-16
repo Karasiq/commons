@@ -1,4 +1,4 @@
-# commons
+# commons [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.karasiq/commons_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.karasiq/commons_2.12)
 Mixed Scala utility classes
 
 # How to use
