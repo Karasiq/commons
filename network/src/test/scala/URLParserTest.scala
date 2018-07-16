@@ -1,5 +1,6 @@
-import com.karasiq.networkutils.url.{URLFilePathParser, URLParser}
 import org.scalatest.{FlatSpec, Matchers}
+
+import com.karasiq.networkutils.url.{URLFilePathParser, URLParser}
 
 class URLParserTest extends FlatSpec with Matchers {
   "URL parser" should "test URLs for validity" in {

@@ -1,7 +1,8 @@
 import java.net.InetAddress
 
-import com.karasiq.networkutils.ip.Subnet
 import org.scalatest.FlatSpec
+
+import com.karasiq.networkutils.ip.Subnet
 
 class SubnetTest extends FlatSpec {
   "Subnet parser" should "read IPv4 range" in {
