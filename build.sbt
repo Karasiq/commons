@@ -1,7 +1,5 @@
 import sbt.Keys._
 
-name := "commons"
-
 val commonDeps = Seq(
   "commons-io" % "commons-io" % "2.5",
   "com.typesafe" % "config" % "1.3.1"
@@ -23,7 +21,7 @@ val akkaDeps = Seq(
 )
 
 lazy val commonSettings = Seq(
-  version := "1.0.9",
+  version := "1.0.10",
   isSnapshot := version.value.endsWith("SNAPSHOT"),
   organization := "com.github.karasiq",
   scalaVersion := "2.12.3",
@@ -105,6 +103,6 @@ lazy val configsJVM = configs.jvm
 lazy val configsJS = configs.js
 
 lazy val `commons` = Project("commons", file("."))
-  .settings(commonSettings, rootSettings)
+  .settings(commonSettings, rootSettings, name := "commons")
   .dependsOn(misc, files, network)
   .aggregate(misc, files, network, akka, configsJVM, configsJS)
