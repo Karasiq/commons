@@ -9,7 +9,7 @@ import com.typesafe.config.{Config, ConfigException, ConfigFactory}
 import com.karasiq.networkutils.proxy.Proxy.ProxyURIProvider
 import com.karasiq.networkutils.uri.URIProvider
 
-abstract class Proxy {
+trait Proxy {
   def host: String
   def port: Int
   def scheme: String
@@ -49,8 +49,11 @@ abstract class Proxy {
  *           my-proxy {
  *             host = 127.0.0.1
  *             port = 1080
- *             scheme = "socks"
+ *             scheme = socks
  *           }
+ *
+ *           // Or
+ *           my-proxy.url = socks://127.0.0.1:1080
  *         */
  *
  *         // Load configuration
@@ -60,14 +63,16 @@ abstract class Proxy {
  *         val proxy = Proxy.config(config, "my-proxy")
  * }}}
  */
-final class TypeSafeConfigProxy(config: Config) extends Proxy {
-  override val host: String = config.getString("host")
-  override val scheme: String = config.getString("scheme")
-  override val port: Int = config.getInt("port")
+private[proxy] final class TypeSafeConfigProxy(config: Config) extends Proxy {
+  private[this] val uri = ExcControl.catching(classOf[ConfigException.Missing])
+    .opt(config.getString("url"))
+    .map(url ⇒ new URI(if (url.contains("://")) url else "http://" + url))
 
-  override val userInfo: Option[String] =
-    ExcControl.catching(classOf[ConfigException.Missing])
-      .opt(config.getString("userinfo"))
+  override val host: String = uri.fold(config.getString("host"))(_.getHost)
+  override val scheme: String = uri.fold(config.getString("scheme"))(_.getScheme)
+  override val port: Int = uri.fold(config.getInt("port"))(_.getPort)
+  override val userInfo: Option[String] = uri.map(_.getUserInfo)
+    .orElse(ExcControl.catching(classOf[ConfigException.Missing]).opt(config.getString("userinfo")))
 }
 
 object Proxy {
