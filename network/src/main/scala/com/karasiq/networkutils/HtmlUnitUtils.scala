@@ -372,10 +372,16 @@ object HtmlUnitUtils {
 
     def classAttribute: String = e.getAttribute("class")
 
-    def classes: Set[String] = classAttribute.split(' ').map(StringUtils.htmlTrim).filter(_.nonEmpty).toSet
+    def classes: Set[String] = {
+      classAttribute.split(' ')
+        .map(StringUtils.htmlTrim)
+        .filter(_.nonEmpty)
+        .toSet
+    }
 
     def tryClick: Option[HtmlPage] = {
-      control.Exception.catching(classOf[FailingHttpStatusCodeException], classOf[ScriptException]).opt(e.click[HtmlPage]())
+      control.Exception.catching(classOf[FailingHttpStatusCodeException], classOf[ScriptException])
+        .opt(e.click[HtmlPage]())
     }
   }
 
@@ -394,17 +400,19 @@ object HtmlUnitUtils {
     }
   }
 
-  implicit def htmlElementOptionClick[A <: HtmlElement](e: Option[A]): Option[HtmlPage] = e.flatMap(_.tryClick)
+  implicit def htmlElementOptionClick[A <: HtmlElement](e: Option[A]): Option[HtmlPage] = {
+    e.flatMap(_.tryClick)
+  }
 
   implicit def proxyToProxyConfig(p: Proxy): ProxyConfig = {
     import p._
-    new ProxyConfig(host, port, scheme == "socks")
+    new ProxyConfig(host, port, scheme.startsWith("socks"))
   }
 
   implicit def proxyConfigToProxy(pc: ProxyConfig): Proxy = new Proxy {
-    override def host: String = pc.getProxyHost
-    override def scheme: String = if (pc.isSocksProxy) "socks" else "http"
-    override def port: Int = pc.getProxyPort
-    override def userInfo: Option[String] = None
+    override val host: String = pc.getProxyHost
+    override val scheme: String = if (pc.isSocksProxy) "socks" else "http"
+    override val port: Int = pc.getProxyPort
+    override val userInfo: Option[String] = None
   }
 }
