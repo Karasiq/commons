@@ -4,7 +4,10 @@ name := "commons"
 
 val commonDeps = Seq(
   "commons-io" % "commons-io" % "2.5",
-  "com.typesafe" % "config" % "1.3.1",
+  "com.typesafe" % "config" % "1.3.1"
+)
+
+val testDeps = Seq(
   "org.scalatest" %% "scalatest" % "3.0.4" % "test"
 )
 
@@ -25,6 +28,7 @@ lazy val commonSettings = Seq(
   organization := "com.github.karasiq",
   scalaVersion := "2.12.3",
   crossScalaVersions := Seq("2.11.11", "2.12.3"),
+  libraryDependencies ++= testDeps,
   publishMavenStyle := true,
   publishTo := {
     val nexus = "https://oss.sonatype.org/"
