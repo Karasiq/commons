@@ -21,7 +21,7 @@ val akkaDeps = Seq(
 )
 
 lazy val commonSettings = Seq(
-  version := "1.0.10",
+  version := "1.0.11",
   isSnapshot := version.value.endsWith("SNAPSHOT"),
   organization := "com.github.karasiq",
   scalaVersion := "2.12.3",
