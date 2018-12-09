@@ -22,7 +22,7 @@ object HttpClientUtils {
     def retryHandler: HttpRequestRetryHandler
     def keepAlive: ConnectionKeepAliveStrategy
 
-    def builder = {
+    def builder: HttpClientBuilder = {
       val b = HttpClientBuilder.create()
       if (connectionManager != null) b.setConnectionManager(connectionManager)
       if (requestConfig != null) b.setDefaultRequestConfig(requestConfig)
@@ -34,8 +34,9 @@ object HttpClientUtils {
 
   case class Settings(connectionManager: HttpClientConnectionManager = null, requestConfig: RequestConfig = null, retryHandler: HttpRequestRetryHandler = null, keepAlive: ConnectionKeepAliveStrategy = null) extends SettingsContainer
 
-  def requestConfig(timeout: Int) = {
+  def requestConfig(timeout: Int): RequestConfig = {
     RequestConfig.custom()
+      .setProxy(Proxy.default.orNull)
       .setSocketTimeout(timeout)
       .setConnectTimeout(timeout)
       .setConnectionRequestTimeout(timeout)
@@ -75,5 +76,7 @@ object HttpClientUtils {
     new HttpHost(host, port, scheme)
   }
 
-  implicit def httpHostToProxy(hh: HttpHost): Proxy = Proxy(hh.getHostName, hh.getPort, hh.getSchemeName)
+  implicit def httpHostToProxy(hh: HttpHost): Proxy = {
+    Proxy(hh.getHostName, hh.getPort, hh.getSchemeName)
+  }
 }
