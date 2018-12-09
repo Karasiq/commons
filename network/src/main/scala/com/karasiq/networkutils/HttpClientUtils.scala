@@ -36,7 +36,7 @@ object HttpClientUtils {
 
   def requestConfig(timeout: Int): RequestConfig = {
     RequestConfig.custom()
-      .setProxy(Proxy.default.orNull)
+      .setProxy(Proxy.default.map(proxyToHttpHost).orNull)
       .setSocketTimeout(timeout)
       .setConnectTimeout(timeout)
       .setConnectionRequestTimeout(timeout)
